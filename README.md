@@ -1,44 +1,36 @@
 # COOOL-PiVaAI
 
-
 ## Installation Guide
- - Install requirements #TODO
+All dependencies are available in the ```requirements.txt```.
+Simple ```pip install -r requirements.txt``` should work.
 
-## Video Processing
+## Video pre-processing
+The approach is based on a few steps. First, we process the video data with available models, and then we work with the predictions while considering all three metrics. 
 
-### Cifar Klasifikace
-  
-### MOLMO captioning
+We provide notebooks to pre-process the data and to allow full reproducibility; you must run all the notebooks, and the inference could take a few hours. For example, the MOLMO captioning requires 40Gb of vRAM and runs for 7 hours.
 
-### OpticalFlow
+To allow easier "results verification," we include all the pre-processing results in a separate pickle file.
 
-### Depth - Estimation
-Produce depth maps for frames of videos in specified frequency. Save them as .jpegs.
-- ```video-process/depth_anything```
-- Run ```depth-anything.ipynb```
-    
-## Driver state change
+⚠️ **Use LFS to clone the repo** ⚠️
 
-### Bboxes method
-Produce driver state change predictions based on change of total amount of bounding box pixels between frames of videos.
-- ```driver-state/*```
-- Run ```run_bboxsizes.ipynb```
+### 1. OpticalFlow
+An OpticalFlow for each image is run, and results are stored in a [pickle file](https://github.com/picekl/COOOL-PiVaAI/tree/main/resources/optical-flow). 
 
-### opticalflow method
+⚠️ While testing the "reproducibility," we have noticed that for some versions of the OpenCV or HW, the OpticalFlow might result in an inf value. This can be fixed by upgrading or downgrading the OpenCV. However, it worked on 4 out of 5 machines pretty well.
 
-### ensembling
+### 2. Image Classification with Cifar pre-trained model
+🚧⏳🔄🛠️ 
 
-## Hazard recognition
+### 3. MOLMO captioning
+🚧⏳🔄🛠️ 
 
-### Predict all available tracks as hazard tracks - Extended baseline 
-Produce hazard tracks predictions based on extension of the baseline approach where all available tracks for each frame are predicted as hazard tracks.
-Hazard track IDs are sorted based on the proximity to the center of the video frame.
-- ```driver-state/*```
-- Run ```run_bboxsizes_alltracks.ipynb```
+### Depth - Estimation [Not used yet] 
+TBD
 
+## Making a Submission
 
-
-### all - cifar classification
-
-## Hazard Captioning
-    Prostě molmo.
+Run the following notebooks that will continuously update the submission:
+```[1.DriverState+HazardTrack-Estimation-BboxSizes.ipynb[()```
+```[2.DriverState-Estimation-OpticalFlow.ipynb]()```
+```[3.DriverState+HazardTrack-Estimation-Ensemble.ipynb]()```
+```[4.HazardCaptioning.ipynb]()```

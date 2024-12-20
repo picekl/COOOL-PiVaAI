@@ -1,16 +1,19 @@
-import numpy as np
-import ruptures as rpt
-import pandas as pd
-import cv2
 import os
+import warnings
 from itertools import zip_longest
 from pathlib import Path
+
+import cv2
+import numpy as np
+import pandas as pd
+import ruptures as rpt
 from PIL import Image
 
+from .driver_state import (baseline_driver_state_changed,
+                           bbox_size_drive_state_changed,
+                           calculate_bbox_size_total,
+                           optical_flow_driver_state_changed)
 from .ioutils import load_frame_annotations, load_video_frames
-from .driver_state import bbox_size_drive_state_changed, calculate_bbox_size_total, baseline_driver_state_changed, optical_flow_driver_state_changed
-
-import warnings
 
 warnings.filterwarnings("ignore")
 
@@ -20,7 +23,7 @@ def baseline_get_hazard(
     bbox_centers: np.ndarray,
     track_ids: list(),
     chips: list(),
-    captioned_tracks: dict
+    captioned_tracks: dict,
 ) -> list():
     """
     Identify the most probable hazard from the frame based on distance to the image center.
@@ -35,9 +38,11 @@ def baseline_get_hazard(
     Returns:
         list[tuple]: A list containing a tuple of hazard track and its caption.
     """
-    image_center = [frame_image.shape[1]/2, frame_image.shape[0]/2]
+    image_center = [frame_image.shape[1] / 2, frame_image.shape[0] / 2]
     if bbox_centers.shape[0] == 0:
-        return [(" ", " "), ]
+        return [
+            (" ", " "),
+        ]
     potential_hazard_dists = np.linalg.norm(bbox_centers - image_center, axis=1)
     probable_hazard = np.argmin(potential_hazard_dists)
     hazard_track = track_ids[probable_hazard]
@@ -55,7 +60,10 @@ def baseline_get_hazard(
     else:
         hazard_caption = captioned_tracks[hazard_track]
 
-    return [(hazard_track, hazard_caption), ]
+    return [
+        (hazard_track, hazard_caption),
+    ]
+
 
 def get_hazards(
     frame_image: np.ndarray,
@@ -82,9 +90,11 @@ def get_hazards(
         list[tuple]: A list of tuples, each containing a hazard track and its caption.
     """
     hazards = []
-    image_center = [frame_image.shape[1]/2, frame_image.shape[0]/2]
+    image_center = [frame_image.shape[1] / 2, frame_image.shape[0] / 2]
     if bbox_centers.shape[0] == 0:
-        return [(" ", " "), ]
+        return [
+            (" ", " "),
+        ]
     potential_hazard_dists = np.linalg.norm(bbox_centers - image_center, axis=1)
 
     bbox_count = bbox_centers.shape[0]
@@ -96,7 +106,9 @@ def get_hazards(
 
         if hazard_track not in captioned_tracks:
             if run_captions:
-                hazard_chip = cv2.cvtColor(chips[probable_hazard_idx], cv2.COLOR_BGR2RGB)
+                hazard_chip = cv2.cvtColor(
+                    chips[probable_hazard_idx], cv2.COLOR_BGR2RGB
+                )
                 hazard_chip = Image.fromarray(hazard_chip)
                 # Generate caption
                 hazard_caption = ci.interrogate(hazard_chip)
@@ -112,6 +124,7 @@ def get_hazards(
         hazards.append((hazard_track, hazard_caption))
 
     return hazards
+
 
 def process_video(
     video_path: str,
@@ -139,7 +152,9 @@ def process_video(
 
     for id_frame, frame_image in video_data:
         frame_number = int(id_frame.split("_")[-1])
-        bboxes, bbox_centers, chips, track_ids = load_frame_annotations(annotations, video_name, frame_number, frame_image)
+        bboxes, bbox_centers, chips, track_ids = load_frame_annotations(
+            annotations, video_name, frame_number, frame_image
+        )
 
         bbox_pixel_size = calculate_bbox_size_total(bboxes)
         bbox_sizes.append(bbox_pixel_size)
@@ -147,14 +162,21 @@ def process_video(
 
         hazard_tracks, hazard_captions = [], []
         if run_tracks:
-            hazards = get_hazards(frame_image, bbox_centers, track_ids, chips, captioned_tracks, run_captions=run_captions)
+            hazards = get_hazards(
+                frame_image,
+                bbox_centers,
+                track_ids,
+                chips,
+                captioned_tracks,
+                run_captions=run_captions,
+            )
             for hazard_track, hazard_caption in hazards:
                 hazard_tracks.append(hazard_track)
                 hazard_captions.append(hazard_caption)
 
         video_results.append(
             {
-                'id': id_frame,
+                "id": id_frame,
                 "bbox_size": bbox_pixel_size,
                 "hazard_tracks": hazard_tracks,
                 "hazard_captions": hazard_captions,
@@ -170,6 +192,7 @@ def process_video(
         video_result["driver_state"] = driver_state
 
     return video_results
+
 
 def video_results_to_submission_format(video_results: list()) -> dict:
     """
@@ -191,7 +214,9 @@ def video_results_to_submission_format(video_results: list()) -> dict:
             "Driver_State_Changed": driver_state,
         }
 
-        for i, track, caption in zip_longest(range(23), hazard_tracks, hazard_captions, fillvalue=" "):
+        for i, track, caption in zip_longest(
+            range(23), hazard_tracks, hazard_captions, fillvalue=" "
+        ):
             if i is None:
                 print("Should not happen")
                 continue

@@ -1,9 +1,60 @@
-import numpy as np
-import ruptures as rpt
-import pandas as pd
-import cv2
 import os
+
+import cv2
+import numpy as np
+import pandas as pd
+import ruptures as rpt  # our package
 from sklearn.linear_model import LinearRegression
+
+
+def determine_drive_state_changed(timeseries: list, n_bkps: int = 3) -> list:
+    """
+    Detects changes in driver state based on a given timeseries using kernel change point detection.
+
+    This function normalizes the input timeseries, applies the Kernel Change Point Detection (CPD)
+    algorithm to identify potential change points, and returns a list indicating whether a driver
+    state change occurred at each time step.
+
+    Parameters:
+    ----------
+    timeseries : list
+        A list of numerical values representing the input timeseries data.
+    n_bkps : int, optional
+        The number of breakpoints to detect in the timeseries (default is 3).
+
+    Returns:
+    -------
+    list
+        A list of boolean values of the same length as `timeseries`. Each element is `True` if a
+        driver state change is detected at that time step, otherwise `False`.
+
+    Raises:
+    ------
+    AssertionError
+        If the length of the output list `driver_state_changed` does not match the input `timeseries`.
+
+    Notes:
+    -----
+    - This function relies on the `ruptures` library for detecting change points.
+    - The timeseries is normalized using its L2 norm before processing.
+
+    Example:
+    -------
+    >>> determine_drive_state_changed([1, 2, 3, 8, 9, 10], n_bkps=2)
+    [False, False, True, True, True, True]
+    """
+    timeseries = np.array(timeseries)
+    timeseries = timeseries / np.linalg.norm(timeseries)
+    algo = rpt.KernelCPD(kernel="rbf").fit(timeseries)
+
+    # Detect breakpoints
+    breakpoints = algo.predict(n_bkps=n_bkps)
+    driver_state_changed = [
+        any(i >= bp for bp in breakpoints) for i in range(len(timeseries))
+    ]
+    assert len(driver_state_changed) == len(timeseries)
+    return driver_state_changed
+
 
 def calculate_bbox_size_total(bboxes: np.ndarray):
     """
@@ -21,9 +72,10 @@ def calculate_bbox_size_total(bboxes: np.ndarray):
         size += abs(x2 - x1) * abs(y2 - y1)
     return size
 
+
 def calculate_optical_flow(
-        video_data: list,
-        motion_threshold: float = None,
+    video_data: list,
+    motion_threshold: float = None,
 ):
     """
     Computes the degree of motion between the current and previous frames.
@@ -52,7 +104,7 @@ def calculate_optical_flow(
             iterations=3,
             poly_n=5,
             poly_sigma=1.2,
-            flags=0
+            flags=0,
         )
 
         magnitude, _ = cv2.cartToPolar(flow[..., 0], flow[..., 1], angleInDegrees=True)
@@ -69,6 +121,7 @@ def calculate_optical_flow(
     optical_flow.insert(0, optical_flow[0])  # Copy to the first frame
     return optical_flow
 
+
 def optical_flow_driver_state_changed(optical_flow: list()):
     """
     Determines whether the driver's state has changed based on optical flow metrics.
@@ -80,6 +133,7 @@ def optical_flow_driver_state_changed(optical_flow: list()):
         list[bool]: A list indicating whether the driver's state has changed for each frame.
     """
     return bbox_size_drive_state_changed(optical_flow)
+
 
 def bbox_size_drive_state_changed(bbox_sizes: list):
     """
@@ -101,6 +155,7 @@ def bbox_size_drive_state_changed(bbox_sizes: list):
     driver_state_changed = [i >= breakpoints[0] for i in range(bbox_sizes.shape[0])]
     assert len(driver_state_changed) == len(bbox_sizes)
     return driver_state_changed
+
 
 def baseline_driver_state_changed(bbox_centers_all: list) -> np.ndarray:
     """
@@ -126,7 +181,9 @@ def baseline_driver_state_changed(bbox_centers_all: list) -> np.ndarray:
 
         dists = []
         for bbox_center in bbox_centers:
-            potential_dists = np.linalg.norm(previous_bbox_centers - bbox_center, axis=1)
+            potential_dists = np.linalg.norm(
+                previous_bbox_centers - bbox_center, axis=1
+            )
             min_dist = np.sort(potential_dists)[0]
             dists.append(min_dist)
 

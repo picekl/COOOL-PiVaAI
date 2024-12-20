@@ -169,3 +169,11 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+*.pth
+video-processing/depth-estimation/Depth-Anything-V2/
+video-processing/depth-estimation/depth_anything_v2/
+
+
+*.csv
+dataset/

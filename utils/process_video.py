@@ -1,14 +1,11 @@
 import numpy as np
-import ruptures as rpt
-import pandas as pd
 import cv2
-import os
 from itertools import zip_longest
 from pathlib import Path
 from PIL import Image
 
 from .ioutils import load_frame_annotations, load_video_frames
-from .driver_state import bbox_size_drive_state_changed, calculate_bbox_size_total, baseline_driver_state_changed, optical_flow_driver_state_changed
+from .driver_state import bbox_size_drive_state_changed, calculate_bbox_size_total
 
 import warnings
 
@@ -18,10 +15,10 @@ warnings.filterwarnings("ignore")
 def baseline_get_hazard(
     frame_image: np.ndarray,
     bbox_centers: np.ndarray,
-    track_ids: list(),
-    chips: list(),
+    track_ids: list,
+    chips: list,
     captioned_tracks: dict
-) -> list():
+) -> list:
     """
     Identify the most probable hazard from the frame based on distance to the image center.
 

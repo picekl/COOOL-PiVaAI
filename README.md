@@ -13,7 +13,7 @@ We provide notebooks to pre-process the data and to allow full reproducibility; 
 
 To allow easier "results verification," we include all the pre-processing results in a separate pickle file.
 
-⚠️ **Use LFS to clone the repo** ⚠️
+⚠️ **Important:** Ensure you use **Git LFS** (Large File Storage) when cloning the repository to handle large files properly.
 
 ---
 

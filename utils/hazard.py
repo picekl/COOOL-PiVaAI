@@ -116,6 +116,30 @@ class Hazard:
             "motorcycle",
             "cloud",
         ]
+    @property
+    def trajectory_check(self):
+        """
+        Determines whether the trajectory's bounding box area is sufficiently large.
+    
+        This method computes the bounding box area from the positions of objects in the 
+        frames and evaluates if it exceeds a predefined threshold (2500). The bounding box 
+        is defined as the smallest rectangle that encompasses all the positions.
+    
+        Returns:
+            bool: True if the bounding box area is greater than 2500, indicating that 
+            the area is large enough, otherwise False.
+        """
+        # Get the positions from the frames
+        positions = [data['position'] for data in self.frames.values()]
+        
+        # Check if the bounding box area is large enough (greater than 10% of the image size)
+        x_coords, y_coords = zip(*positions)
+        bbox = [min(x_coords), min(y_coords), max(x_coords), max(y_coords)]
+        bbox_area = (bbox[2] - bbox[0]) * (bbox[3] - bbox[1])
+        
+        bbox_big_enough = bbox_area > 2500
+        
+        return bbox_big_enough
 
     def visualize(self, frame_idx=None, folder_path="./dataset/coool-benchmark/"):
         """
